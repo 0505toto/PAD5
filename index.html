@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>経理部ポータル</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link rel="stylesheet" href="style5.css">
+    <link rel="stylesheet" href="style6.css">
 </head>
 <body>
 
@@ -14,13 +14,13 @@
         <div class="header-content">
             <h1><i class="fa-solid fa-landmark"></i> 経理部ポータル</h1>
             <p>業務に必要な情報やツールをまとめました。</p>
-            <p class="update-info">更新日: 2025年7月8日 Ver.1</p>
+            <p class="update-info">更新日: 2025年7月15日 Ver.1.1</p>
         </div>
     </header>
 
     <div class="main-layout">
         
-        <main class="container">
+        <main id="main-container" class="container">
 
             <section id="widgets" class="widget-section">
                 <div id="weather-widget" class="card">
@@ -38,9 +38,10 @@
                 </a>
             </section>
 
-            <section id="favorites">
+            <section id="favorites" class="sortable-section">
                 <div class="section-header">
                     <h2 data-title-id="favorites">
+                        <i class="fa-solid fa-grip-vertical drag-handle" title="セクションを移動"></i>
                         <i class="fa-solid fa-star"></i>
                         <span class="section-title">お気に入り</span>
                         <button class="edit-title-btn" title="タイトルを編集"><i class="fa-solid fa-pencil"></i></button>
@@ -53,8 +54,9 @@
                     </div>
             </section>
 
-            <section id="schedule">
+            <section id="schedule" class="sortable-section">
                 <h2 data-title-id="schedule">
+                    <i class="fa-solid fa-grip-vertical drag-handle" title="セクションを移動"></i>
                     <i class="fa-solid fa-calendar-days"></i>
                     <span class="section-title">Schedule</span>
                     <button class="edit-title-btn" title="タイトルを編集"><i class="fa-solid fa-pencil"></i></button>
@@ -66,8 +68,9 @@
                 </div>
             </section>
             
-            <section id="accounting-links">
+            <section id="accounting-links" class="sortable-section">
                 <h2 data-title-id="accounting-links">
+                    <i class="fa-solid fa-grip-vertical drag-handle" title="セクションを移動"></i>
                     <i class="fa-solid fa-calculator"></i>
                     <span class="section-title">経理部専用ツール</span>
                     <button class="edit-title-btn" title="タイトルを編集"><i class="fa-solid fa-pencil"></i></button>
@@ -85,23 +88,25 @@
                 </div>
             </section>
 
-            <section id="company-links">
+            <section id="company-links" class="sortable-section">
                 <h2 data-title-id="company-links">
+                    <i class="fa-solid fa-grip-vertical drag-handle" title="セクションを移動"></i>
                     <i class="fa-solid fa-building"></i>
                     <span class="section-title">社内共通リンク</span>
                     <button class="edit-title-btn" title="タイトルを編集"><i class="fa-solid fa-pencil"></i></button>
                 </h2>
                 <div id="company-links-grid" class="card-grid-small">
-                    <a href="https://hz6n32v7pq52.cybozu.com/g/" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-cloud card-icon-small"></i><h4>Garoon</h4><p>社内ポータル</p></a>
-                    <a href="https://hz6n32v7pq52.cybozu.com/k/#/portal" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-shapes card-icon-small"></i><h4>Kintone</h4><p>アプリ作成</p></a>
+                    <a href="https://hz6n32v7pq52.cybozu.com/g/" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-shapes card-icon-small"></i><h4>Garoon</h4><p>社内ポータル</p></a>
+                    <a href="https://hz6n32v7pq52.cybozu.com/k/#/portal" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-cloud card-icon-small"></i><h4>Kintone</h4><p>アプリ作成</p></a>
                     <a href="https://https://hz6n32v7pq52.cybozu.com/k/168/?view=20#sort_0=f13312458&order_0=desc&qs=1/" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-address-book card-icon-small"></i><h4>経理住所録Hub※工事中</h4><p>取引先等の住所録</p></a>
                     <a href="https://0505toto.github.io/Info-1/" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-wand-magic-sparkles card-icon-small"></i><h4>PT Info</h4><p>特に使わないかも</p></a>
-                    <a href="#" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-file-circle-question card-icon-small"></i><h4>Operation Portal</h4><p>経理詳細</p></a>
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="card"><i class="fa-solid fa-briefcase card-icon-small"></i><h4>Operation Portal</h4><p>経理詳細</p></a>
                 </div>
             </section>
 
-            <section id="ai-tools">
+            <section id="ai-tools" class="sortable-section">
                 <h2 data-title-id="ai-tools">
+                    <i class="fa-solid fa-grip-vertical drag-handle" title="セクションを移動"></i>
                     <i class="fa-solid fa-brain"></i>
                     <span class="section-title">AIツール</span>
                     <button class="edit-title-btn" title="タイトルを編集"><i class="fa-solid fa-pencil"></i></button>
@@ -148,7 +153,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
-    <script src="script5.js"></script>
+    <script src="script6.js"></script>
 
 </body>
 </html>
