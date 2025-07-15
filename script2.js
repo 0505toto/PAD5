@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
             a.innerHTML = `
                 <i class="fa-solid fa-link card-icon-small"></i>
                 <h4>${this.escapeHTML(fav.name)}</h4>
+                <p>${this.escapeHTML(fav.url)}</p>
                 <button class="button-delete" title="削除">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * ★★★ 新機能: タイトル編集機能 ★★★
+     * ★ 機能2: タイトル編集機能
      * ==================================
      */
     const titleEditor = {
@@ -175,14 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
             span.contentEditable = true;
             span.focus();
             span.classList.add('editing');
-            button.innerHTML = '<i class="fa-solid fa-check"></i>'; // 保存アイコンに変更
+            button.innerHTML = '<i class="fa-solid fa-check"></i>';
 
-            // フォーカスが外れたら保存する
             span.addEventListener('blur', this.onBlurHandler = (e) => {
                 this.saveTitle(span, button);
-            }, { once: true }); // 一度実行したらイベントリスナーを削除
+            }, { once: true });
 
-            // Enterキーで保存、Escキーでキャンセル
             span.addEventListener('keydown', this.onKeydownHandler = (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -194,15 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         saveTitle(span, button) {
-            if (!span.isContentEditable) return; // 既に処理済みの場合は何もしない
+            if (!span.isContentEditable) return;
 
-            // blurとkeydownのリスナーを明示的に削除
             span.removeEventListener('blur', this.onBlurHandler);
             span.removeEventListener('keydown', this.onKeydownHandler);
             
             span.contentEditable = false;
             span.classList.remove('editing');
-            button.innerHTML = '<i class="fa-solid fa-pencil"></i>'; // 鉛筆アイコンに戻す
+            button.innerHTML = '<i class="fa-solid fa-pencil"></i>';
             
             const newTitle = span.innerText.trim();
             const titleId = span.closest('h2').dataset.titleId;
@@ -210,7 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newTitle && newTitle !== span.dataset.originalTitle) {
                 localStorage.setItem(`title_${titleId}`, newTitle);
             } else {
-                // 空欄にされた場合は元のタイトルに戻す
                 span.innerText = span.dataset.originalTitle;
             }
         },
@@ -230,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * ★ 機能2: 静的リンクの並び替え機能
+     * ★ 機能3: 静的リンクの並び替え機能
      * ==================================
      */
     const sortableLinks = {
@@ -277,10 +274,57 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     };
+    
+    /**
+     * ==================================
+     * ★★★ 新機能: セクションの並び替え機能 ★★★
+     * ==================================
+     */
+    const sectionSorter = {
+        container: document.getElementById('main-container'),
+        storageKey: 'portalSectionOrder',
+
+        init() {
+            this.applySavedOrder();
+            this.setupSortable();
+        },
+
+        applySavedOrder() {
+            const savedOrder = JSON.parse(localStorage.getItem(this.storageKey));
+            if (!savedOrder) return;
+            
+            const sections = new Map();
+            this.container.querySelectorAll('.sortable-section').forEach(section => {
+                sections.set(section.id, section);
+            });
+
+            savedOrder.forEach(id => {
+                const section = sections.get(id);
+                if(section) {
+                    this.container.appendChild(section);
+                }
+            });
+        },
+
+        setupSortable() {
+            Sortable.create(this.container, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                handle: '.drag-handle', // ドラッグハンドルを指定
+                filter: '#widgets', // ウィジェットセクションは移動不可にする
+                onEnd: () => {
+                    const newOrder = Array.from(this.container.children)
+                        .map(item => item.id)
+                        .filter(id => id && id !== 'widgets'); // IDがあり、ウィジェットでないもの
+                    localStorage.setItem(this.storageKey, JSON.stringify(newOrder));
+                }
+            });
+        }
+    };
 
     /**
      * ==================================
-     * ★ 機能3: Quick Access 機能
+     * ★ 機能4: Quick Access 機能
      * ==================================
      */
     const quickAccessApp = {
@@ -394,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * 機能4: 天気予報ウィジェット
+     * 機能5: 天気予報ウィジェット
      * ==================================
      */
     const fetchWeather = async () => {
@@ -425,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * 機能5: スクロールアニメーション
+     * 機能6: スクロールアニメーション
      * ==================================
      */
     const setupScrollAnimations = () => {
@@ -453,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * 機能6: パーティクルエフェクト
+     * 機能7: パーティクルエフェクト
      * ==================================
      */
     const setupParticles = () => {
@@ -473,8 +517,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==================================
     fetchWeather();
     favoritesApp.init();
-    titleEditor.init(); // ★ 新しいタイトル編集機能の初期化を追加
+    titleEditor.init();
     sortableLinks.init();
+    sectionSorter.init(); // ★ セクション並び替え機能の初期化を追加
     quickAccessApp.init();
     setupScrollAnimations();
     setupParticles();
