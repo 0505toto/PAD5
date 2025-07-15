@@ -12,7 +12,7 @@
     --danger-color: #dc3545;
     --shadow-color: rgba(0, 0, 0, 0.08);
     --border-color: #e9ecef;
-    --favorite-bg-color: #fffbe6; /* ★お気に入り用の黄色を追加 */
+    --favorite-text-color: #c78c06; /* ★お気に入り用の文字色を追加 */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,17 +62,46 @@ body { font-family: 'Noto Sans JP', sans-serif; background-color: var(--bg-color
 }
 
 /* ===== メインコンテンツエリア ===== */
-section { margin-bottom: 50px; }
+section { 
+    margin-bottom: 50px; 
+    background-color: var(--content-bg-color);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+/* ウィジェットセクションは背景などを適用しない */
+#widgets {
+    background-color: transparent;
+    padding: 0;
+    box-shadow: none;
+}
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid var(--border-color); padding-bottom: 10px; }
 h2 { font-size: 1.8rem; color: var(--accent-color); }
-/* h2がsection-headerの外にある場合のマージン調整 */
 section > h2 { margin-bottom: 25px; }
+#favorites .section-header, #widgets .section-header {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 25px;
+}
+#favorites .section-header h2 {
+    border-bottom: none;
+    margin-bottom: 0;
+}
 
-/* ===== ★追加: タイトル編集機能のスタイル ===== */
+
+/* ===== ★変更: タイトル編集とセクション移動のスタイル ===== */
 h2[data-title-id] {
     display: flex;
     align-items: center;
     position: relative;
+    gap: 0.7em;
+}
+.drag-handle {
+    cursor: grab;
+    color: #cbd5e1;
+}
+.drag-handle:hover {
+    color: var(--accent-color);
 }
 .section-title {
     padding: 2px 6px;
@@ -97,11 +126,11 @@ h2[data-title-id] {
     height: 32px;
     line-height: 1;
     margin-left: 8px;
-    opacity: 0; /* 最初は非表示 */
+    opacity: 0; 
     transition: all 0.2s ease-in-out;
 }
 h2[data-title-id]:hover .edit-title-btn {
-    opacity: 0.6; /* ホバーで表示 */
+    opacity: 0.6;
 }
 .edit-title-btn:hover {
     opacity: 1;
@@ -110,21 +139,16 @@ h2[data-title-id]:hover .edit-title-btn {
     transform: scale(1.1);
 }
 
-/* ===== ★追加: お気に入りセクションの特別スタイル ===== */
-#favorites {
-    background-color: var(--favorite-bg-color);
-    padding: 25px;
-    border-radius: 12px;
+/* ===== ★変更: お気に入りセクションの文字色 ===== */
+#favorites-list .card h4,
+#favorites-list .card .card-icon-small {
+    color: var(--favorite-text-color);
 }
-#favorites .section-header {
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 25px;
+/* 説明文の色は通常に戻す */
+#favorites-list .card p {
+    color: var(--secondary-text-color);
 }
-#favorites .section-header h2 {
-    border-bottom: none;
-    margin-bottom: 0;
-}
+
 
 /* ===== アニメーション ===== */
 .card {
@@ -164,6 +188,9 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
     cursor: grabbing;
     transform: scale(1.03) !important;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+.sortable-section.sortable-ghost {
+    background: #eef3f7;
 }
 
 /* ===== ウィジェットのスタイル ===== */
@@ -248,10 +275,10 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
 /* ===== レスポンシブ対応 ===== */
 @media (max-width: 1200px) {
     .main-layout {
-        grid-template-columns: 1fr; /* 1カラムレイアウトに変更 */
+        grid-template-columns: 1fr;
     }
     #quick-access-sidebar {
-        position: static; /* サイドバーの固定を解除 */
+        position: static;
         max-height: none;
     }
 }
