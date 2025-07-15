@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         init() {
             this.addEventListeners();
             this.loadFavorites();
-            // ★変更: 並び替え機能は新しい cardSorter に一任するため、ここでの setupSortable() 呼び出しは削除
+            this.setupSortable();
         },
 
         addEventListeners() {
@@ -49,9 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         renderFavorites() {
-            // 現在のスクロール位置を保持
-            const scrollY = window.scrollY;
-
             this.list.innerHTML = '';
             this.favorites.forEach(fav => {
                 const favElement = this.createFavoriteElement(fav);
@@ -60,9 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     scrollObserver.observe(favElement);
                 }
             });
-            
-            // スクロール位置を復元
-            window.scrollTo(0, scrollY);
         },
         
         addFavorite(event) {
@@ -74,17 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const newFavorite = { id: Date.now(), name: name, url: url };
                 this.favorites.push(newFavorite);
                 this.saveFavorites();
-                
-                // 新しい要素をリストの末尾に追加
-                const newElement = this.createFavoriteElement(newFavorite);
-                this.list.appendChild(newElement);
-                if (scrollObserver) {
-                    scrollObserver.observe(newElement);
-                }
-                
-                // ★変更: 新しいカードが追加されたので、全体の配置を保存する
-                cardSorter.saveOrder();
-
+                this.renderFavorites();
                 this.form.reset();
                 this.toggleModal(false);
             }
@@ -95,9 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.favorites = this.favorites.filter(fav => fav.id !== id);
                 this.saveFavorites();
                 this.renderFavorites();
-
-                // ★変更: カードが削除されたので、全体の配置を保存する
-                cardSorter.saveOrder();
             }
         },
 
@@ -106,10 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
             a.href = fav.url;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
-            a.className = 'card favorite-card'; // アニメーションクラスはObserverが付ける
+            a.className = 'card favorite-card fade-in-up';
             a.dataset.id = fav.id;
 
-            // ★変更: お気に入りのURL(<p>タグ)を表示しないように修正
             a.innerHTML = `
                 <i class="fa-solid fa-link card-icon-small"></i>
                 <h4>${this.escapeHTML(fav.name)}</h4>
@@ -128,6 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return a;
         },
 
+        setupSortable() {
+            Sortable.create(this.list, {
+                group: { name: 'shared-links', pull: 'clone', put: false },
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    const newOrder = Array.from(this.list.children).map(item => Number(item.dataset.id));
+                    this.favorites.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+                    this.saveFavorites();
+                }
+            });
+        },
+
         escapeHTML(str) {
             const p = document.createElement('p');
             p.textContent = str;
@@ -137,11 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * ★ 機能2: タイトル編集機能
+     * ★★★ 新機能: タイトル編集機能 ★★★
      * ==================================
      */
     const titleEditor = {
-        // (このセクションは元のコードから変更ありません)
         init() {
             this.loadTitles();
             this.addEventListeners();
@@ -183,36 +175,34 @@ document.addEventListener('DOMContentLoaded', () => {
             span.contentEditable = true;
             span.focus();
             span.classList.add('editing');
-            button.innerHTML = '<i class="fa-solid fa-check"></i>';
+            button.innerHTML = '<i class="fa-solid fa-check"></i>'; // 保存アイコンに変更
 
-            // フォーカスが外れた時とキー入力のイベントリスナーを設定
-            const saveHandler = () => this.saveTitle(span, button);
-            const keydownHandler = (e) => {
+            // フォーカスが外れたら保存する
+            span.addEventListener('blur', this.onBlurHandler = (e) => {
+                this.saveTitle(span, button);
+            }, { once: true }); // 一度実行したらイベントリスナーを削除
+
+            // Enterキーで保存、Escキーでキャンセル
+            span.addEventListener('keydown', this.onKeydownHandler = (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     this.saveTitle(span, button);
                 } else if (e.key === 'Escape') {
                     this.cancelEditing(span, button);
                 }
-            };
-
-            span.addEventListener('blur', saveHandler, { once: true });
-            span.addEventListener('keydown', keydownHandler);
-
-            // リスナーを後で削除できるように保存
-            span.dataset.saveHandler = saveHandler;
-            span.dataset.keydownHandler = keydownHandler;
+            });
         },
 
         saveTitle(span, button) {
-            if (!span.isContentEditable) return;
+            if (!span.isContentEditable) return; // 既に処理済みの場合は何もしない
 
-            span.removeEventListener('blur', span.dataset.saveHandler);
-            span.removeEventListener('keydown', span.dataset.keydownHandler);
+            // blurとkeydownのリスナーを明示的に削除
+            span.removeEventListener('blur', this.onBlurHandler);
+            span.removeEventListener('keydown', this.onKeydownHandler);
             
             span.contentEditable = false;
             span.classList.remove('editing');
-            button.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            button.innerHTML = '<i class="fa-solid fa-pencil"></i>'; // 鉛筆アイコンに戻す
             
             const newTitle = span.innerText.trim();
             const titleId = span.closest('h2').dataset.titleId;
@@ -220,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newTitle && newTitle !== span.dataset.originalTitle) {
                 localStorage.setItem(`title_${titleId}`, newTitle);
             } else {
+                // 空欄にされた場合は元のタイトルに戻す
                 span.innerText = span.dataset.originalTitle;
             }
         },
@@ -227,8 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelEditing(span, button) {
              if (!span.isContentEditable) return;
 
-            span.removeEventListener('blur', span.dataset.saveHandler);
-            span.removeEventListener('keydown', span.dataset.keydownHandler);
+            span.removeEventListener('blur', this.onBlurHandler);
+            span.removeEventListener('keydown', this.onKeydownHandler);
 
             span.innerText = span.dataset.originalTitle;
             span.contentEditable = false;
@@ -236,135 +227,52 @@ document.addEventListener('DOMContentLoaded', () => {
             button.innerHTML = '<i class="fa-solid fa-pencil"></i>';
         }
     };
-    
-    /**
-     * ==================================
-     * ★★★ 新機能: カード全体の並び替え機能 ★★★
-     * ==================================
-     */
-    const cardSorter = {
-        storageKey: 'portalCardOrderV3', // バージョンアップ
-
-        init() {
-            this.applyOrder();
-            this.setupSortable();
-        },
-        
-        getCardId(card) {
-            if (card.classList.contains('favorite-card')) return `fav-${card.dataset.id}`;
-            if (card.id) return card.id;
-            const href = card.getAttribute('href');
-            if (href) return href;
-            return null;
-        },
-
-        saveOrder() {
-            const orderData = {};
-            document.querySelectorAll('.card-container').forEach(container => {
-                // コンテナのIDを特定
-                const containerId = container.id || (container.closest('section') ? container.closest('section').id : null);
-                if (containerId) {
-                    const cardIds = Array.from(container.querySelectorAll('.card')).map(card => this.getCardId(card)).filter(Boolean);
-                    orderData[containerId] = cardIds;
-                }
-            });
-            localStorage.setItem(this.storageKey, JSON.stringify(orderData));
-        },
-
-        applyOrder() {
-            const savedOrder = JSON.parse(localStorage.getItem(this.storageKey));
-            if (!savedOrder) return;
-
-            const allCards = new Map();
-            document.querySelectorAll('.card-container .card').forEach(card => {
-                const id = this.getCardId(card);
-                if (id) allCards.set(id, card);
-            });
-
-            // 一度すべてのコンテナからカードを退避
-            allCards.forEach(card => card.remove());
-            
-            // 保存された順序に従ってカードを再配置
-            Object.keys(savedOrder).forEach(containerId => {
-                const container = document.getElementById(containerId) || document.querySelector(`#${containerId} .card-container`);
-                if(container){
-                     savedOrder[containerId].forEach(cardId => {
-                        const cardElement = allCards.get(cardId);
-                        if (cardElement) {
-                            container.appendChild(cardElement);
-                            allCards.delete(cardId);
-                        }
-                    });
-                }
-            });
-            
-            // 順序データになかった新しいカードなどを最初のコンテナに戻す（念のため）
-            if(allCards.size > 0){
-                const firstContainer = document.querySelector('.card-container');
-                allCards.forEach(card => firstContainer.appendChild(card));
-            }
-        },
-
-        setupSortable() {
-            const containers = document.querySelectorAll('.card-container');
-            containers.forEach(container => {
-                Sortable.create(container, {
-                    group: 'shared-links', // Quick Access と連携するための共通グループ名
-                    animation: 200,
-                    ghostClass: 'sortable-ghost',
-                    chosenClass: 'sortable-chosen',
-                    forceFallback: true, // スクロール挙動を改善
-                    onEnd: () => {
-                        this.saveOrder();
-                    }
-                });
-            });
-        }
-    };
 
     /**
      * ==================================
-     * ★ 機能3: セクションの並び替え機能
+     * ★ 機能2: 静的リンクの並び替え機能
      * ==================================
      */
-    const sectionSorter = {
-        container: document.getElementById('main-container'),
-        storageKey: 'portalSectionOrderV2', // バージョンアップ
+    const sortableLinks = {
+        targets: [
+            { containerId: 'accounting-links-grid', storageKey: 'accountingLinksOrder' },
+            { containerId: 'ai-tools-grid', storageKey: 'aiToolsOrder' },
+            { containerId: 'company-links-grid', storageKey: 'companyLinksOrder' }
+        ],
 
         init() {
-            this.applySavedOrder();
-            this.setupSortable();
-        },
-
-        applySavedOrder() {
-            const savedOrder = JSON.parse(localStorage.getItem(this.storageKey));
-            if (!savedOrder) return;
-            
-            const sections = new Map();
-            this.container.querySelectorAll('.sortable-section').forEach(section => {
-                sections.set(section.id, section);
-            });
-
-            savedOrder.forEach(id => {
-                const section = sections.get(id);
-                if(section) {
-                    this.container.appendChild(section);
+            this.targets.forEach(target => {
+                const container = document.getElementById(target.containerId);
+                if (container) {
+                    this.applySavedOrder(container, target.storageKey);
+                    this.setupSortable(container, target.storageKey);
                 }
             });
         },
 
-        setupSortable() {
-            Sortable.create(this.container, {
-                animation: 200,
+        applySavedOrder(container, storageKey) {
+            const savedOrder = JSON.parse(localStorage.getItem(storageKey));
+            if (!savedOrder) return;
+            const items = new Map();
+            container.childNodes.forEach(node => {
+                if (node.nodeType === 1 && node.tagName === 'A') {
+                    items.set(node.getAttribute('href'), node);
+                }
+            });
+            savedOrder.forEach(key => {
+                const item = items.get(key);
+                if (item) container.appendChild(item);
+            });
+        },
+
+        setupSortable(container, storageKey) {
+            Sortable.create(container, {
+                group: { name: 'shared-links', pull: 'clone', put: false },
+                animation: 150,
                 ghostClass: 'sortable-ghost',
-                handle: '.drag-handle',
-                // ★変更: 'filter'オプションを削除し、#widgets セクションも移動可能にする
                 onEnd: () => {
-                    // ★変更: #widgets も含めてすべてのIDを保存する
-                    const newOrder = Array.from(this.container.children)
-                        .map(item => item.id)
-                        .filter(id => id); // IDがあるものだけを対象
-                    localStorage.setItem(this.storageKey, JSON.stringify(newOrder));
+                    const newOrder = Array.from(container.children).map(item => item.getAttribute('href'));
+                    localStorage.setItem(storageKey, JSON.stringify(newOrder));
                 }
             });
         }
@@ -372,11 +280,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * ★ 機能4: Quick Access 機能
+     * ★ 機能3: Quick Access 機能
      * ==================================
      */
     const quickAccessApp = {
-        // (このセクションは元のコードから変更ありません)
         list: document.getElementById('quick-access-list'),
         placeholder: document.querySelector('.drop-placeholder'),
         items: [],
@@ -399,11 +306,10 @@ document.addEventListener('DOMContentLoaded', () => {
             this.list.innerHTML = '';
             
             if (this.items.length === 0) {
-                // プレースホルダーを再挿入
-                if (this.placeholder) this.list.appendChild(this.placeholder);
+                this.list.appendChild(this.placeholder);
                 this.placeholder.style.display = 'block';
             } else {
-                if (this.placeholder) this.placeholder.style.display = 'none';
+                this.placeholder.style.display = 'none';
                 this.items.forEach(item => {
                     const itemElement = this.createItemElement(item);
                     this.list.appendChild(itemElement);
@@ -420,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             a.href = item.url;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
-            a.className = 'card';
+            a.className = 'card fade-in-up';
             a.dataset.id = item.id;
 
             a.innerHTML = item.htmlContent + `
@@ -441,13 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
         addItem(originalElement) {
              const url = originalElement.href;
              if (this.items.some(item => item.url === url)) {
-                 // 既に存在する場合は追加しない（元の要素はonAddで削除されるので、ここで終了）
+                 originalElement.remove();
                  return;
              }
              const cleanClone = originalElement.cloneNode(true);
              const existingButton = cleanClone.querySelector('.button-delete');
              if (existingButton) existingButton.remove();
-
              const newItem = {
                  id: Date.now(),
                  url: url,
@@ -455,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
              };
              this.items.push(newItem);
              this.saveItems();
-             this.renderItems(); // 全体を再描画して順序と表示を正しく保つ
+             this.renderItems();
         },
 
         deleteItem(id) {
@@ -466,22 +371,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setupSortable() {
             Sortable.create(this.list, {
-                group: 'shared-links', // カードコンテナと共通のグループ名
+                group: 'shared-links',
                 animation: 150,
                 ghostClass: 'sortable-ghost',
                 onAdd: (evt) => {
-                    // 他のリストからアイテムが追加されたら、クローンとして扱う
                     this.addItem(evt.item);
-                    // 元のリストからドロップされたアイテムは自動的に削除されるので、
-                    // QuickAccessにはコピーが作成される挙動になる
-                    evt.item.remove();
                 },
                 onEnd: (evt) => {
-                    // Quick Access内で並び替えた場合
                     if (evt.from === evt.to) {
                         const newOrder = Array.from(this.list.children)
-                                              .map(item => Number(item.dataset.id))
-                                              .filter(id => !isNaN(id));
+                                             .map(item => Number(item.dataset.id))
+                                             .filter(id => !isNaN(id));
                         if (newOrder.length > 0) {
                             this.items.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
                             this.saveItems();
@@ -494,13 +394,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * ==================================
-     * 機能5: 天気予報ウィジェット
+     * 機能4: 天気予報ウィジェット
      * ==================================
      */
     const fetchWeather = async () => {
         const weatherWidget = document.getElementById('weather-info');
         if (!weatherWidget) return;
-        // APIは https://github.com/chubin/wttr.in を利用
         const apiUrl = 'https://wttr.in/Osaka?format=j1';
         try {
             const response = await fetch(apiUrl);
@@ -512,40 +411,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const tempC = currentCondition.temp_C;
             const maxTemp = todayWeather.maxtempC;
             const minTemp = todayWeather.mintempC;
-            
-            const weatherIconMap = {
-                "Sunny": "fa-sun",
-                "Clear": "fa-moon", // 夜は月アイコンに
-                "Partly cloudy": "fa-cloud-sun",
-                "Cloudy": "fa-cloud",
-                "Overcast": "fa-smog",
-                "Mist": "fa-smog",
-                "Patchy rain possible": "fa-cloud-rain",
-                "Patchy snow possible": "fa-cloud-meatball",
-                "Patchy sleet possible": "fa-cloud-meatball",
-                "Thundery outbreaks possible": "fa-cloud-bolt",
-                "Rain": "fa-cloud-showers-heavy",
-                "Showers": "fa-cloud-showers-heavy",
-                "Snow": "fa-snowflake",
-            };
-            let weatherIcon = "fa-solid fa-cloud-sun"; // デフォルト
-            for (const key in weatherIconMap) {
-                if (description.includes(key)) {
-                    weatherIcon = "fa-solid " + weatherIconMap[key];
-                    break;
-                }
-            }
+            let weatherIcon = 'fa-solid fa-cloud-sun';
+            if (description.includes('Sunny') || description.includes('Clear')) weatherIcon = 'fa-solid fa-sun';
+            else if (description.includes('Rain') || description.includes('Shower')) weatherIcon = 'fa-solid fa-cloud-showers-heavy';
+            else if (description.includes('Cloudy') || description.includes('Overcast')) weatherIcon = 'fa-solid fa-cloud';
+            else if (description.includes('Snow')) weatherIcon = 'fa-solid fa-snowflake';
             
             weatherWidget.innerHTML = `<div class="weather-main"><i class="${weatherIcon}"></i><span class="weather-temp">${tempC}°C</span><span class="weather-desc">${description}</span></div><div class="weather-sub"><span>最高: ${maxTemp}°C</span> / <span>最低: ${minTemp}°C</span></div>`;
         } catch (error) {
-            console.error(error);
             weatherWidget.innerHTML = '<p>天気情報を取得できませんでした。</p>';
         }
     };
 
     /**
      * ==================================
-     * 機能6: スクロールアニメーション
+     * 機能5: スクロールアニメーション
      * ==================================
      */
     const setupScrollAnimations = () => {
@@ -556,8 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
-                    // Quick Access内のアイテムは再表示される可能性があるため、unobserveしない
-                    if (!entry.target.closest('#quick-access-sidebar')) {
+                    if (!entry.target.closest('#quick-access-sidebar') && !entry.target.classList.contains('favorite-card')) {
                        scrollObserver.unobserve(entry.target);
                     }
                 }
@@ -565,13 +444,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { threshold: 0.1 });
 
         animatedElements.forEach((el) => {
+            if (!el.classList.contains('fade-in-up')) {
+                el.classList.add('fade-in-up');
+            }
             scrollObserver.observe(el);
         });
     };
 
     /**
      * ==================================
-     * 機能7: パーティクルエフェクト
+     * 機能6: パーティクルエフェクト
      * ==================================
      */
     const setupParticles = () => {
@@ -590,14 +472,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 各機能の初期化・実行
     // ==================================
     fetchWeather();
-    titleEditor.init();
-    sectionSorter.init();
-    quickAccessApp.init();
-
-    // ★重要: favoritesApp.init() の後 (DOM生成後) に cardSorter.init() を実行
     favoritesApp.init();
-    cardSorter.init();
-    
+    titleEditor.init(); // ★ 新しいタイトル編集機能の初期化を追加
+    sortableLinks.init();
+    quickAccessApp.init();
     setupScrollAnimations();
     setupParticles();
+
 });
