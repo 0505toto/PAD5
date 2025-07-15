@@ -12,7 +12,7 @@
     --danger-color: #dc3545;
     --shadow-color: rgba(0, 0, 0, 0.08);
     --border-color: #e9ecef;
-    --favorite-text-color: #c78c06; /* ★お気に入り用の文字色を追加 */
+    --favorite-bg-color: #fffbe6; /* ★お気に入り用の黄色を追加 */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,57 +62,17 @@ body { font-family: 'Noto Sans JP', sans-serif; background-color: var(--bg-color
 }
 
 /* ===== メインコンテンツエリア ===== */
-section { 
-    margin-bottom: 50px; 
-    background-color: var(--content-bg-color);
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px var(--shadow-color);
-}
-/* ウィジェットセクションは背景などを適用しない */
-#widgets {
-    position: relative; /* ★変更: ハンドルの絶対位置指定の基準にする */
-    background-color: transparent;
-    padding: 0;
-    box-shadow: none;
-}
+section { margin-bottom: 50px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid var(--border-color); padding-bottom: 10px; }
 h2 { font-size: 1.8rem; color: var(--accent-color); }
+/* h2がsection-headerの外にある場合のマージン調整 */
 section > h2 { margin-bottom: 25px; }
-#favorites .section-header {
-    border-bottom: none;
-    padding-bottom: 0;
-    margin-bottom: 25px;
-}
-#favorites .section-header h2 {
-    border-bottom: none;
-    margin-bottom: 0;
-}
 
-
-/* ===== タイトル編集とセクション移動のスタイル ===== */
+/* ===== ★追加: タイトル編集機能のスタイル ===== */
 h2[data-title-id] {
     display: flex;
     align-items: center;
     position: relative;
-    gap: 0.7em;
-}
-.drag-handle {
-    cursor: grab;
-    color: #cbd5e1;
-    transition: color 0.2s;
-}
-.drag-handle:hover {
-    color: var(--accent-color);
-}
-/* ★追加: ウィジェットセクション専用のハンドル位置調整 */
-#widgets > .drag-handle {
-    position: absolute;
-    top: 15px;
-    left: -5px;
-    font-size: 1.5rem;
-    padding: 5px;
-    z-index: 10;
 }
 .section-title {
     padding: 2px 6px;
@@ -137,11 +97,11 @@ h2[data-title-id] {
     height: 32px;
     line-height: 1;
     margin-left: 8px;
-    opacity: 0; 
+    opacity: 0; /* 最初は非表示 */
     transition: all 0.2s ease-in-out;
 }
 h2[data-title-id]:hover .edit-title-btn {
-    opacity: 0.6;
+    opacity: 0.6; /* ホバーで表示 */
 }
 .edit-title-btn:hover {
     opacity: 1;
@@ -150,19 +110,21 @@ h2[data-title-id]:hover .edit-title-btn {
     transform: scale(1.1);
 }
 
-/* ===== お気に入りセクションのスタイル調整 ===== */
-#favorites-list .card h4,
-#favorites-list .card .card-icon-small {
-    color: var(--favorite-text-color);
+/* ===== ★追加: お気に入りセクションの特別スタイル ===== */
+#favorites {
+    background-color: var(--favorite-bg-color);
+    padding: 25px;
+    border-radius: 12px;
 }
-/* ★変更: URL非表示に伴い、タイトル下の余白を調整して高さを揃える */
-#favorites-list .card h4 {
-    margin-bottom: 10px;
+#favorites .section-header {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 25px;
 }
-#favorites-list .card p {
-    color: var(--secondary-text-color);
+#favorites .section-header h2 {
+    border-bottom: none;
+    margin-bottom: 0;
 }
-
 
 /* ===== アニメーション ===== */
 .card {
@@ -182,8 +144,7 @@ h2[data-title-id]:hover .edit-title-btn {
 .card-grid-small { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 
 /* ===== カード基本スタイル ===== */
-.card { background-color: var(--content-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); padding: 25px; text-decoration: none; color: var(--primary-text-color); display: flex; flex-direction: column; position: relative; }
-a.card { cursor: pointer; } /* JSで並び替えを実装したので grab は不要に */
+.card { background-color: var(--content-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); padding: 25px; text-decoration: none; color: var(--primary-text-color); display: flex; flex-direction: column; position: relative; cursor: grab; }
 a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px rgba(0, 82, 155, 0.2); color: var(--accent-color); }
 .card h3, .card h4 { margin-right: 30px; }
 .card p { margin-right: 30px; }
@@ -200,21 +161,23 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
     border: 2px dashed var(--accent-color);
 }
 .sortable-chosen {
-    cursor: grabbing !important;
+    cursor: grabbing;
     transform: scale(1.03) !important;
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25) !important;
-}
-.sortable-section.sortable-ghost {
-    background: #eef3f7;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
 }
 
 /* ===== ウィジェットのスタイル ===== */
-#weather-widget .card-header { padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
-#weather-widget { cursor: default; }
+#weather-widget .card-header, #search-widget .card-header { padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+#weather-widget, #search-widget { cursor: default; }
 .weather-main { display: flex; align-items: center; gap: 15px; font-size: 2.2rem; font-weight: bold; color: var(--accent-color); }
 .weather-main .fa-solid { font-size: 2.8rem; }
 .weather-desc { font-size: 1rem; font-weight: normal; color: var(--secondary-text-color); }
 .weather-sub { margin-top: 10px; text-align: right; color: var(--secondary-text-color); font-size: 0.9rem; }
+#google-search-form { display: flex; }
+#google-search-form input { flex-grow: 1; border: 2px solid #ddd; border-radius: 8px 0 0 8px; padding: 12px; font-size: 1rem; outline: none; transition: border-color 0.3s; }
+#google-search-form input:focus { border-color: var(--accent-color); }
+#google-search-form button { border: none; background-color: var(--accent-color); color: white; padding: 0 20px; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 1.2rem; transition: background-color 0.3s; }
+#google-search-form button:hover { background-color: var(--accent-color-dark); }
 
 /* ===== Quick Access サイドバー ===== */
 #quick-access-sidebar {
@@ -240,7 +203,6 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
     display: grid;
     gap: 15px;
     grid-template-columns: 1fr;
-    min-height: 100px; /* ドロップエリアを確保 */
 }
 .drop-placeholder {
     padding: 40px 20px;
@@ -286,15 +248,11 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
 /* ===== レスポンシブ対応 ===== */
 @media (max-width: 1200px) {
     .main-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* 1カラムレイアウトに変更 */
     }
     #quick-access-sidebar {
-        position: static;
+        position: static; /* サイドバーの固定を解除 */
         max-height: none;
-    }
-    /* ★変更: ウィジェットハンドルの位置を調整 */
-    #widgets > .drag-handle {
-        left: 0;
     }
 }
 @media (max-width: 768px) {
