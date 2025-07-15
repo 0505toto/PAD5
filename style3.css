@@ -12,7 +12,7 @@
     --danger-color: #dc3545;
     --shadow-color: rgba(0, 0, 0, 0.08);
     --border-color: #e9ecef;
-    --favorite-text-color: #c78c06; /* ★お気に入り用の文字色を追加 */
+    --favorite-text-color: #c78c06;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,34 +62,23 @@ body { font-family: 'Noto Sans JP', sans-serif; background-color: var(--bg-color
 }
 
 /* ===== メインコンテンツエリア ===== */
-section { 
+.sortable-section, .widget-card {
     margin-bottom: 50px; 
     background-color: var(--content-bg-color);
     padding: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 15px var(--shadow-color);
 }
-/* ウィジェットセクションは背景などを適用しない */
-#widgets {
-    background-color: transparent;
-    padding: 0;
-    box-shadow: none;
-}
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 3px solid var(--border-color); padding-bottom: 10px; }
 h2 { font-size: 1.8rem; color: var(--accent-color); }
 section > h2 { margin-bottom: 25px; }
-#favorites .section-header, #widgets .section-header {
+#favorites .section-header {
     border-bottom: none;
     padding-bottom: 0;
     margin-bottom: 25px;
 }
-#favorites .section-header h2 {
-    border-bottom: none;
-    margin-bottom: 0;
-}
 
-
-/* ===== ★変更: タイトル編集とセクション移動のスタイル ===== */
+/* ===== タイトル編集とセクション移動のスタイル ===== */
 h2[data-title-id] {
     display: flex;
     align-items: center;
@@ -99,9 +88,19 @@ h2[data-title-id] {
 .drag-handle {
     cursor: grab;
     color: #cbd5e1;
+    font-size: 1.2rem;
 }
 .drag-handle:hover {
     color: var(--accent-color);
+}
+.widget-card .drag-handle {
+    position: absolute;
+    top: 22px;
+    left: 25px;
+}
+.widget-card .card-header,
+.widget-card > .card-icon {
+    margin-left: 25px;
 }
 .section-title {
     padding: 2px 6px;
@@ -139,16 +138,14 @@ h2[data-title-id]:hover .edit-title-btn {
     transform: scale(1.1);
 }
 
-/* ===== ★変更: お気に入りセクションの文字色 ===== */
+/* ===== お気に入りセクションの文字色 ===== */
 #favorites-list .card h4,
 #favorites-list .card .card-icon-small {
     color: var(--favorite-text-color);
 }
-/* 説明文の色は通常に戻す */
 #favorites-list .card p {
     color: var(--secondary-text-color);
 }
-
 
 /* ===== アニメーション ===== */
 .card {
@@ -159,16 +156,26 @@ h2[data-title-id]:hover .edit-title-btn {
 .visible { opacity: 1; transform: none; }
 
 /* ===== グリッドレイアウト ===== */
-.widget-section, .card-grid, .card-grid-small {
+.card-grid, .card-grid-small {
     display: grid;
     gap: 25px;
 }
-.widget-section { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .card-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 .card-grid-small { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 
 /* ===== カード基本スタイル ===== */
-.card { background-color: var(--content-bg-color); border-radius: 12px; box-shadow: 0 4px 15px var(--shadow-color); padding: 25px; text-decoration: none; color: var(--primary-text-color); display: flex; flex-direction: column; position: relative; cursor: grab; }
+.card { 
+    background-color: var(--content-bg-color); 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px var(--shadow-color); 
+    padding: 25px; 
+    text-decoration: none; 
+    color: var(--primary-text-color); 
+    display: flex; 
+    flex-direction: column; 
+    position: relative; 
+    cursor: grab; 
+}
 a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px rgba(0, 82, 155, 0.2); color: var(--accent-color); }
 .card h3, .card h4 { margin-right: 30px; }
 .card p { margin-right: 30px; }
@@ -177,6 +184,9 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
 .card p { font-size: 0.9rem; color: var(--secondary-text-color); flex-grow: 1; }
 .card-icon { font-size: 3rem; margin-bottom: 15px; color: var(--accent-color); }
 .card-icon-small { font-size: 2rem; margin-bottom: 10px; color: var(--accent-color); }
+.widget-card {
+    padding: 25px;
+}
 
 /* ===== 並び替え機能の視覚効果 ===== */
 .sortable-ghost {
@@ -194,17 +204,11 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
 }
 
 /* ===== ウィジェットのスタイル ===== */
-#weather-widget .card-header, #search-widget .card-header { padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
-#weather-widget, #search-widget { cursor: default; }
+#weather-widget .card-header { padding-bottom: 10px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
 .weather-main { display: flex; align-items: center; gap: 15px; font-size: 2.2rem; font-weight: bold; color: var(--accent-color); }
 .weather-main .fa-solid { font-size: 2.8rem; }
 .weather-desc { font-size: 1rem; font-weight: normal; color: var(--secondary-text-color); }
 .weather-sub { margin-top: 10px; text-align: right; color: var(--secondary-text-color); font-size: 0.9rem; }
-#google-search-form { display: flex; }
-#google-search-form input { flex-grow: 1; border: 2px solid #ddd; border-radius: 8px 0 0 8px; padding: 12px; font-size: 1rem; outline: none; transition: border-color 0.3s; }
-#google-search-form input:focus { border-color: var(--accent-color); }
-#google-search-form button { border: none; background-color: var(--accent-color); color: white; padding: 0 20px; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 1.2rem; transition: background-color 0.3s; }
-#google-search-form button:hover { background-color: var(--accent-color-dark); }
 
 /* ===== Quick Access サイドバー ===== */
 #quick-access-sidebar {
@@ -240,19 +244,12 @@ a.card:hover { transform: translateY(-8px) !important; box-shadow: 0 10px 25px r
     font-size: 0.9rem;
 }
 
-/* ===== お気に入り & Quick Access 共通のボタン ===== */
+/* ===== 共通のボタン ===== */
 .button-add { background: var(--accent-color); color: white; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 1.2rem; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0, 82, 155, 0.4); flex-shrink: 0; }
 .button-add:hover { background: var(--accent-color-dark); transform: scale(1.1) rotate(90deg); }
 .button-delete { position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #ccc; font-size: 1rem; cursor: pointer; padding: 5px; border-radius: 50%; width: 32px; height: 32px; opacity: 0.5; transition: all 0.3s ease; }
 .card:hover .button-delete { opacity: 1; }
 .button-delete:hover { background: #f0f0f0; color: var(--danger-color); }
-.favorite-card p {
-    font-size: 0.8rem;
-    color: var(--secondary-text-color);
-    word-break: break-all;
-    margin-top: 5px;
-    margin-bottom: 10px;
-}
 
 /* ===== モーダルのスタイル ===== */
 .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; animation: fadeInModal 0.4s ease forwards; }
